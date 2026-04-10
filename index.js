@@ -5,8 +5,8 @@ const app = express();
 app.use(express.json());
 
 // 🔑 CONFIGURA
-const TELEGRAM_TOKEN = "8292789731:AAHOTJ-mevcRenIzt6sBlapaPLLpwSwMlS4";
-const CHAT_ID = "1998268076";
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT_ID = process.env.CHAT_ID;
 
 // 📩 Telegram
 async function sendTelegram(text) {
@@ -50,6 +50,8 @@ app.post("/webhook", async (req, res) => {
 });
 
 // 🚀 Servidor
-app.listen(3000, () => {
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => { {
   console.log("Servidor corriendo en puerto 3000");
 });
