@@ -59,11 +59,6 @@ app.post("/webhook", async (req, res) => {
       if (processedTxs.has(tx.signature)) continue;
       markTx(tx.signature);
 
-      // =========================
-      // 🟢 CASO 1: nativeTransfers
-      // =========================
-      const nativeTransfers = tx.nativeTransfers || [];
-
       for (const t of nativeTransfers) {
         const from = normalize(t.fromUserAccount);
         const to = normalize(t.toUserAccount);
@@ -76,14 +71,6 @@ app.post("/webhook", async (req, res) => {
           await sendAlert(tx.signature, from, to, sol);
         }
       }
-
-      // =========================
-      // 🟡 CASO 2: instructions (fallback)
-      // =========================
-      const instructions = tx.instructions || [];
-
-      for (const ins of instructions) {
-        const accounts = ins.accounts || [];
 
         if (accounts.length >= 2) {
           const from = normalize(accounts[0]);
