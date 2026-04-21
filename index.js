@@ -10,19 +10,20 @@ const CHAT_ID = process.env.CHAT_ID || "1998268076";
 
 // 🎯 WALLETS (en minúsculas para evitar fallos)
 const WATCH_WALLETS = [
-  "bwamjzztzsepfktewrchggmxuiicqvplqpietdnfsxa",
-  "9cddj5g2wpqvzuzwppuwqzxn7ouvc6qfaufwrx2tttax",
-  "abzjvilf5epj7m9ae6nrlrzwbdstt8pa5254tptgggfk",
-  "4dttpro9btatsvgxtiltnfrlxiyghctuxrj2njs2tgjc",
-  "amvguz1uxgpii98erswqgqqutyt nrw4jp8phgj3tj7rr",
-  "eugrgd6gjztyqppfnmzmvnffpn4gwqrmaie4a3cw2fbk"
+  "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
+  "9cDDJ5g2wPqVZUZwpPuwqzxN7ouvc6QFauFwrX2TTTAX",
+  "ABZJViLf5ePJ7m9AE6nrLrZwBDStT8pa5254TpTgGGfk",
+  "4DTTpRo9BtATsVgxtiLtnFRLxiYGhCtuXrJ2njs2tgJC",
+  "AmvgUZ1uXgPii98ErSWQGqQUTYtnRw4jp8phGJ3tJ7RR",
+  "EUgrgd6gjZtyqpPfnMZMVnFfpN4GWqRMaie4a3cW2fbK",
+  "BigrQYqqumRdxseNJwqwaAR86zeEVjKpVuXMaEucqqTu"
 ];
 
 const TARGET_WALLETS = [
-  "bigrt9danxnzvnfqpg3vf4wvyg yifftfmvalpvsl nvtu",
-  "6bazgnmbn7wppyvyx9ce1yedkoxkft3uyimq1ja3at4n",
-  "fheprhthtpes6xvcmw7ebr bzavasqrjcveb7dfiuw7co",
-  "3bwcjrxv4laskv7dbl rji7fdxgrrfezhestdvoszjehr"
+  "BigrT9DAnXnzVNFQPg3VF4WvyGyifFtFMVALPVsLnvTu",
+  "6baZgNmBn7WpPYvYX9Ce1yeDKoXKFT3uyiMq1JA3aT4N",
+  "FHEprhHtHPES6XVcmW7eBRbZAvASQRJcvEB7DFiuW7co",
+  "3bwCjRXv4LASkv7DbLRJi7fDXgRRfEZhEstDVoZsjEHR"
 ];
 
 // 🔧 normalizar (evita errores por mayúsculas)
