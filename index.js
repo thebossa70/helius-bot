@@ -45,14 +45,13 @@ app.post("/webhook", async (req, res) => {
 
         const from = normalize(t.fromUserAccount);
         const to = normalize(t.toUserAccount);
+        console.log("FROM:", from);
+        console.log("TO:", to);
         const amount = t.amount;
 
         const sol = amount / 1e9;
 
-        if (
-          WATCH_WALLETS.includes(from) &&
-          TARGET_WALLETS.includes(to)
-        ) {
+        if (WATCH_WALLETS.includes(from)) {
 
           console.log("MATCH:", from, "→", to);
 
