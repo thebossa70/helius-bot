@@ -4,127 +4,98 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-console.log("BOT ACTIVO");
+console.log("BOT VERSION FINAL");
 
-// 🔴 CONFIG
-const BOT_TOKEN = process.env.BOT_TOKEN || "8292789731:AAHOTJ-mevcRenIzt6sBlapaPLLpwSwMlS4";
+// 🔐 CONFIG
+const BOT_TOKEN = process.env.BOT_TOKEN || "8765421883:AAEKaILUSLDTn_IluFBEGNjVvEQDz30SqJM";
 const CHAT_ID = process.env.CHAT_ID || "1998268076";
 
-// 🎯 WALLETS (EXACTAS, NO minúsculas)
+// 🎯 WALLETS
 const WATCH_WALLETS = [
-  "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
-  "9cDDJ5g2wPqVZUZwpPuwqzxN7ouvc6QFauFwrX2TTTAX",
-  "ABZJViLf5ePJ7m9AE6nrLrZwBDStT8pa5254TpTgGGfk",
-  "4DTTpRo9BtATsVgxtiLtnFRLxiYGhCtuXrJ2njs2tgJC",
-  "AmvgUZ1uXgPii98ErSWQGqQUTYtnRw4jp8phGJ3tJ7RR",
-  "EUgrgd6gjZtyqpPfnMZMVnFfpN4GWqRMaie4a3cW2fbK",
-  "BigrQYqqumRdxseNJwqwaAR86zeEVjKpVuXMaEucqqTu"
+  "bigrqyqqumrdxsenjwqwaar86zeevjkpvuxmaeucqqtu"
 ];
 
 const TARGET_WALLETS = [
-  "BigrT9DAnXnzVNFQPg3VF4WvyGyifFtFMVALPVsLnvTu",
-  "6baZgNmBn7WpPYvYX9Ce1yeDKoXKFT3uyiMq1JA3aT4N",
-  "FHEprhHtHPES6XVcmW7eBRbZAvASQRJcvEB7DFiuW7co",
-  "3bwCjRXv4LASkv7DbLRJi7fDXgRRfEZhEstDVoZsjEHR"
+  "bigrt9danxnzvnfqpg3vf4wvygyifftfmvalpvslnvtu"
 ];
 
-// 🔥 WEBHOOK
-app.post("/webhook", (req, res) => {
-  console.log("🔥 WEBHOOK HIT");
+// normalizar
+const normalize = (addr) => (addr || "").toLowerCase();
 
-  // RESPUESTA INMEDIATA (CLAVE)
-  res.status(200).send("ok");
+// 🚀 WEBHOOK
+app.post("/webhook", async (req, res) => {
+  // 🔥 RESPONDER INMEDIATO (CLAVE PARA HELIUS)
+  res.send("ok");
 
-  // PROCESAR EN BACKGROUND
-  setImmediate(async () => {
-    try {
-      const txs = req.body;
+  try {
+    const txs = req.body;
 
-      for (const tx of txs) {
+    console.log("EVENTOS:", txs.length);
 
-        console.log("TX:", tx.signature);
+    for (const tx of txs) {
 
-        // 🔥 DEBUG SIEMPRE (para saber que sí funciona)
-        await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-          chat_id: CHAT_ID,
-          text: `📩 TX RECIBIDA\nhttps://solscan.io/tx/${tx.signature}`
-        });
+      // 🧠 CASO 1: nativeTransfers
+      const nativeTransfers = tx.nativeTransfers || [];
 
-        // 🔥 1. intentar nativeTransfers
-        let transfers = tx.nativeTransfers || [];
+      for (const t of nativeTransfers) {
+        const from = normalize(t.fromUserAccount);
+        const to = normalize(t.toUserAccount);
 
-        // 🔥 2. fallback tokenTransfers
-        if (!transfers.length && tx.tokenTransfers) {
-          transfers = tx.tokenTransfers;
+        if (
+          WATCH_WALLETS.includes(from) &&
+          TARGET_WALLETS.includes(to)
+        ) {
+          await sendAlert(tx, from, to, t.amount / 1e9);
         }
+      }
 
-        // 🔥 3. fallback accountData (EL MÁS IMPORTANTE)
-        if (!transfers.length && tx.accountData) {
+      // 🧠 CASO 2: instrucciones (cuando NO hay nativeTransfers)
+      const instructions = tx.instructions || [];
 
-          const accounts = tx.accountData.map(a => a.account);
+      for (const ins of instructions) {
+        const accounts = ins.accounts || [];
 
-          const from = WATCH_WALLETS.find(w => accounts.includes(w));
-          const to = TARGET_WALLETS.find(w => accounts.includes(w));
-
-          if (from && to) {
-            console.log("MATCH (accountData):", from, "→", to);
-
-            await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-              chat_id: CHAT_ID,
-              text: `🚨 MATCH DETECTADO
-
-De: ${from}
-Para: ${to}
-
-https://solscan.io/tx/${tx.signature}`
-            });
-          }
-
-          continue;
-        }
-
-        // 🔥 4. normal transfers
-        for (const t of transfers) {
-
-          const from = t.fromUserAccount || t.from;
-          const to = t.toUserAccount || t.to;
-
-          console.log("FROM:", from);
-          console.log("TO:", to);
+        if (accounts.length >= 2) {
+          const from = normalize(accounts[0]);
+          const to = normalize(accounts[1]);
 
           if (
             WATCH_WALLETS.includes(from) &&
             TARGET_WALLETS.includes(to)
           ) {
-
-            console.log("MATCH REAL:", from, "→", to);
-
-            const sol = (t.amount || 0) / 1e9;
-
-            await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-              chat_id: CHAT_ID,
-              text: `🚨 TRANSFERENCIA REAL
-
-De: ${from}
-Para: ${to}
-Monto: ${sol} SOL
-
-https://solscan.io/tx/${tx.signature}`
-            });
+            await sendAlert(tx, from, to, "UNKNOWN");
           }
         }
       }
-
-    } catch (err) {
-      console.log("ERROR:", err.response?.data || err.message);
     }
-  });
+
+  } catch (err) {
+    console.log("ERROR:", err.message);
+  }
 });
 
-// 🔥 HEALTH CHECK (IMPORTANTE)
-app.get("/", (req, res) => {
-  res.send("alive");
-});
+// 📩 TELEGRAM
+async function sendAlert(tx, from, to, amount) {
+  console.log("MATCH:", from, "→", to);
 
+  const msg = `🚨 TRANSFERENCIA DETECTADA
+
+De: ${from}
+Para: ${to}
+Monto: ${amount} SOL
+
+https://solscan.io/tx/${tx.signature}`;
+
+  try {
+    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      chat_id: CHAT_ID,
+      text: msg
+    });
+  } catch (e) {
+    console.log("TELEGRAM ERROR:", e.response?.data || e.message);
+  }
+}
+
+// 🚀 SERVER
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Servidor activo"));
+app.listen(PORT, () => console.log("Servidor activo en puerto", PORT));
