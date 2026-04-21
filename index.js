@@ -6,11 +6,9 @@ app.use(express.json());
 
 console.log("BOT ACTIVO");
 
-// 🔴 CONFIG
-const BOT_TOKEN = process.env.BOT_TOKEN || "8292789731:AAHOTJ-mevcRenIzt6sBlapaPLLpwSwMlS4";
+const BOT_TOKEN = process.env.BOT_TOKEN || "8765421883:AAEKaILUSLDTn_IluFBEGNjVvEQDz30SqJM";
 const CHAT_ID = process.env.CHAT_ID || "1998268076";
 
-// 🎯 WALLETS (IMPORTANTE: EXACTAS, SIN MINÚSCULAS)
 const WATCH_WALLETS = [
   "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
   "9cDDJ5g2wPqVZUZwpPuwqzxN7ouvc6QFauFwrX2TTTAX",
@@ -28,93 +26,72 @@ const TARGET_WALLETS = [
   "3bwCjRXv4LASkv7DbLRJi7fDXgRRfEZhEstDVoZsjEHR"
 ];
 
-app.post("/webhook", async (req, res) => {
+app.post("/webhook", (req, res) => {
   console.log("EVENTO RECIBIDO");
 
-  const txs = req.body;
+  // 🔥 RESPONDER INMEDIATO (CLAVE)
+  res.status(200).send("ok");
 
-  try {
-    for (const tx of txs) {
+  // 🔥 PROCESAR EN BACKGROUND
+  setImmediate(async () => {
+    try {
+      const txs = req.body;
 
-      // 🔥 1. Intentar nativeTransfers
-      let transfers = tx.nativeTransfers || [];
+      for (const tx of txs) {
 
-      // 🔥 2. fallback si no hay nativeTransfers
-      if (!transfers.length && tx.tokenTransfers) {
-        transfers = tx.tokenTransfers;
-      }
+        let transfers = tx.nativeTransfers || [];
 
-      // 🔥 3. si tampoco hay, usar accountData (modo extremo)
-      if (!transfers.length && tx.accountData) {
-
-        const accounts = tx.accountData.map(a => a.account);
-
-        const from = WATCH_WALLETS.find(w => accounts.includes(w));
-        const to = TARGET_WALLETS.find(w => accounts.includes(w));
-
-        if (from && to) {
-          console.log("MATCH (accountData):", from, "→", to);
-
-          const msg = `🚨 TRANSFERENCIA DETECTADA
-
-De: ${from}
-Para: ${to}
-
-https://solscan.io/tx/${tx.signature}`;
-
-          await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-            chat_id: CHAT_ID,
-            text: msg
-          });
+        if (!transfers.length && tx.tokenTransfers) {
+          transfers = tx.tokenTransfers;
         }
 
-        continue;
-      }
+        if (!transfers.length && tx.accountData) {
+          const accounts = tx.accountData.map(a => a.account);
 
-      // 🔥 4. procesamiento normal
-      for (const t of transfers) {
+          const from = WATCH_WALLETS.find(w => accounts.includes(w));
+          const to = TARGET_WALLETS.find(w => accounts.includes(w));
 
-        const from = t.fromUserAccount || t.from;
-        const to = t.toUserAccount || t.to;
-        const amount = t.amount || 0;
+          if (from && to) {
+            console.log("MATCH (fallback):", from, "→", to);
 
-        console.log("FROM:", from);
-        console.log("TO:", to);
+            await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+              chat_id: CHAT_ID,
+              text: `🚨 TRANSFERENCIA DETECTADA\n\nDe: ${from}\nPara: ${to}\nhttps://solscan.io/tx/${tx.signature}`
+            });
+          }
 
-        if (
-          WATCH_WALLETS.includes(from) &&
-          TARGET_WALLETS.includes(to)
-        ) {
+          continue;
+        }
 
-          console.log("MATCH REAL:", from, "→", to);
+        for (const t of transfers) {
 
-          const sol = amount / 1e9;
+          const from = t.fromUserAccount || t.from;
+          const to = t.toUserAccount || t.to;
 
-          const msg = `🚨 TRANSFERENCIA DETECTADA
+          if (
+            WATCH_WALLETS.includes(from) &&
+            TARGET_WALLETS.includes(to)
+          ) {
 
-De: ${from}
-Para: ${to}
-Monto: ${sol} SOL
+            console.log("MATCH REAL:", from, "→", to);
 
-https://solscan.io/tx/${tx.signature}`;
+            const sol = (t.amount || 0) / 1e9;
 
-          await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-            chat_id: CHAT_ID,
-            text: msg
-          });
+            await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+              chat_id: CHAT_ID,
+              text: `🚨 TRANSFERENCIA DETECTADA\n\nDe: ${from}\nPara: ${to}\nMonto: ${sol} SOL\nhttps://solscan.io/tx/${tx.signature}`
+            });
+          }
         }
       }
+
+    } catch (err) {
+      console.log("ERROR:", err.message);
     }
-
-    res.send("ok");
-
-  } catch (err) {
-    console.log("ERROR:", err.response?.data || err.message);
-    res.send("error");
-  }
+  });
 });
 
-// 🔥 health check (MUY IMPORTANTE para Railway)
+// 🔥 health check
 app.get("/", (req, res) => {
   res.send("alive");
 });
