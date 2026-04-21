@@ -4,6 +4,8 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
+console.log("BOT VERSION NUEVA");
+
 // 🔴 CONFIGURA ESTO (MEJOR USAR VARIABLES DE ENTORNO EN RAILWAY)
 const BOT_TOKEN = process.env.BOT_TOKEN || "8292789731:AAHOTJ-mevcRenIzt6sBlapaPLLpwSwMlS4";
 const CHAT_ID = process.env.CHAT_ID || "1998268076";
