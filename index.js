@@ -7,7 +7,7 @@ app.use(express.json());
 console.log("BOT VERSION FINAL");
 
 // 🔐 CONFIG
-const BOT_TOKEN = process.env.BOT_TOKEN || "8765421883:AAEKaILUSLDTn_IluFBEGNjVvEQDz30SqJM";
+const BOT_TOKEN = process.env.BOT_TOKEN || "8292789731:AAHOTJ-mevcRenIzt6sBlapaPLLpwSwMlS4";
 const CHAT_ID = process.env.CHAT_ID || "1998268076";
 
 // 🎯 WALLETS
