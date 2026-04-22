@@ -4,13 +4,13 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-console.log("BOT VERSION FINAL ANTI-DUPLICADOS");
+console.log("BOT VERSION SIN DUPLICADOS");
 
-// 🔐 CONFIG
+// CONFIG
 const BOT_TOKEN = process.env.BOT_TOKEN || "8292789731:AAHOTJ-mevcRenIzt6sBlapaPLLpwSwMlS4";
 const CHAT_ID = process.env.CHAT_ID || "1998268076";
 
-// 🎯 WALLETS
+// WATCH
 const WATCH_WALLETS = [
   "bwamjzztzsepfktewrchggmxiicqvplqpietdnfsxa",
   "9cddj5g2wpqvzuzwpuwqzxn7ouvc6qfaufwrx2tttax",
@@ -28,104 +28,80 @@ const TARGET_WALLETS = [
   "3bwcjrxv4laskv7dblrji7fdxgrrfezhestdvozsjehr"
 ];
 
-// 🔧 normalizar
-const normalize = (addr) => (addr || "").toLowerCase();
+const normalize = a => (a || "").toLowerCase();
 
-// 🧠 anti-duplicados
-const processedTxs = new Set();
+// anti duplicados por firma
+const seen = new Set();
 
-function markTx(signature) {
-  processedTxs.add(signature);
+function remember(sig){
+   seen.add(sig);
 
-  // limpiar en 5 minutos
-  setTimeout(() => {
-    processedTxs.delete(signature);
-  }, 5 * 60 * 1000);
+   // limpia en 5 min
+   setTimeout(()=>{
+      seen.delete(sig);
+   },300000);
 }
 
-// 🚀 WEBHOOK
-app.post("/webhook", async (req, res) => {
-  // 🔥 responder rápido (evita error 502 en Helius)
-  res.send("ok");
+app.post("/webhook", async (req,res)=>{
+   res.send("ok"); // responder rápido a Helius
 
-  try {
-    const txs = req.body;
+   try{
 
-    console.log("EVENTOS RECIBIDOS:", txs.length);
+      const txs = req.body || [];
 
-    for (const tx of txs) {
+      for(const tx of txs){
 
-      // 🚫 evitar duplicados
-      if (processedTxs.has(tx.signature)) continue;
-      markTx(tx.signature);
+         if(!tx.signature) continue;
 
-      // =========================
-      // 🟢 CASO 1: nativeTransfers
-      // =========================
-      const nativeTransfers = tx.nativeTransfers || [];
+         // si ya la procesé, ignorar
+         if(seen.has(tx.signature)){
+            console.log("DUPLICADO IGNORADO:", tx.signature);
+            continue;
+         }
 
-      for (const t of nativeTransfers) {
-        const from = normalize(t.fromUserAccount);
-        const to = normalize(t.toUserAccount);
-        const sol = t.amount / 1e9;
+         remember(tx.signature);
 
-        if (
-          WATCH_WALLETS.includes(from) &&
-          TARGET_WALLETS.includes(to)
-        ) {
-          await sendAlert(tx.signature, from, to, sol);
-        }
-      }
+         const transfers = tx.nativeTransfers || [];
 
-      // =========================
-      // 🟡 CASO 2: instructions (fallback)
-      // =========================
-      const instructions = tx.instructions || [];
+         for(const t of transfers){
 
-      for (const ins of instructions) {
-        const accounts = ins.accounts || [];
+            const from = normalize(t.fromUserAccount);
+            const to = normalize(t.toUserAccount);
 
-        if (accounts.length >= 2) {
-          const from = normalize(accounts[0]);
-          const to = normalize(accounts[1]);
+            if(
+               WATCH_WALLETS.includes(from) &&
+               TARGET_WALLETS.includes(to)
+            ){
 
-          if (
-            WATCH_WALLETS.includes(from) &&
-            TARGET_WALLETS.includes(to)
-          ) {
-            await sendAlert(tx.signature, from, to, "UNKNOWN");
-          }
-        }
-      }
-    }
+               const sol = t.amount / 1e9;
 
-  } catch (err) {
-    console.log("ERROR:", err.message);
-  }
-});
+               console.log("MATCH:", from, "→", to);
 
-// 📩 TELEGRAM
-async function sendAlert(signature, from, to, amount) {
-  console.log("MATCH:", from, "→", to);
-
-  const msg = `🚨 TRANSFERENCIA DETECTADA
+               await axios.post(
+                 `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+                 {
+                   chat_id: CHAT_ID,
+                   text:
+`🚨 TRANSFERENCIA DETECTADA
 
 De: ${from}
 Para: ${to}
-Monto: ${amount} SOL
+Monto: ${sol} SOL
 
-https://solscan.io/tx/${signature}`;
+https://solscan.io/tx/${tx.signature}`
+                 }
+               );
 
-  try {
-    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      chat_id: CHAT_ID,
-      text: msg
-    });
-  } catch (e) {
-    console.log("TELEGRAM ERROR:", e.response?.data || e.message);
-  }
-}
+               break; // 🔥 evita segundo envío dentro misma tx
+            }
+         }
+      }
 
-// 🚀 SERVER
+   } catch(err){
+      console.log("ERROR:", err.response?.data || err.message);
+   }
+
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Servidor activo en puerto", PORT));
+app.listen(PORT, ()=> console.log("Servidor activo"));
