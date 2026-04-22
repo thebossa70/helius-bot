@@ -17,20 +17,12 @@ const CHAT_ID = process.env.CHAT_ID || "1998268076";
 
 const WATCH_WALLETS = [
  "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa",
- "9cDDJ5g2wPqVZUZwpPuwqzxN7ouvc6QFauFwrX2TTTAX",
- "ABZJViLf5ePJ7m9AE6nrLrZwBDStT8pa5254TpTgGGfk",
- "4DTTpRo9BtATsVgxtiLtnFRLxiYGhCtuXrJ2njs2tgJC",
- "AmvgUZ1uXgPii98ErSWQGqQUTYtnRw4jp8phGJ3tJ7RR",
- "EUgrgd6gjZtyqpPfnMZMVnFfpN4GWqRMaie4a3cW2fbK",
  "BigrQYqqumRdxseNJwqwaAR86zeEVjKpVuXMaEucqqTu"
 ].map(w => w.toLowerCase());
 
 
 const TARGET_WALLETS = [
  "BigrT9DAnXnzVNFQPg3VF4WvyGyifFtFMVALPVsLnvTu",
- "6baZgNmBn7WpPYvYX9Ce1yeDKoXKFT3uyiMq1JA3aT4N",
- "FHEprhHtHPES6XVcmW7eBRbZAvASQRJcvEB7DFiuW7co",
- "3bwCjRXv4LASkv7DbLRJi7fDXgRRfEZhEstDVoZsjEHR"
 ].map(w => w.toLowerCase());
 
 
