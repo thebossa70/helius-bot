@@ -7,7 +7,7 @@ app.use(express.json());
 console.log("BOT VERSION SIN DUPLICADOS");
 
 // CONFIG
-const BOT_TOKEN = process.env.BOT_TOKEN || "8292789731:AAHOTJ-mevcRenIzt6sBlapaPLLpwSwMlS4";
+const BOT_TOKEN = process.env.BOT_TOKEN || "8292789731:AAHXSo9PBZ_i0TgioRgwh-EfgiennxNmZG8";
 const CHAT_ID = process.env.CHAT_ID || "1998268076";
 
 // WATCH
